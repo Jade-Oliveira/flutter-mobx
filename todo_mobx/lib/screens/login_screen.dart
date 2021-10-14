@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:todomobx/stores/login_store.dart';
 import 'package:todomobx/widgets/custom_icon_button.dart';
 import 'package:todomobx/widgets/custom_text_field.dart';
 
@@ -10,7 +12,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  Color primaryColor;
+  final LoginStore loginStore = LoginStore();
+  late Color primaryColor;
 
   // @override
   // void initState() {
@@ -39,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hint: 'E-mail',
                       prefix: Icon(Icons.account_circle),
                       textInputType: TextInputType.emailAddress,
-                      onChanged: (email) {},
+                      onChanged: loginStore.setEmail,
                       enabled: true,
                     ),
                     const SizedBox(
@@ -49,7 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       hint: 'Senha',
                       prefix: Icon(Icons.lock),
                       obscure: true,
-                      onChanged: (pass) {},
+                      //passando aqui as actions eu já terei os respectivos campos observables alterados
+                      onChanged: loginStore.setPassword,
                       enabled: true,
                       suffix: CustomIconButton(
                         radius: 32,
@@ -61,40 +65,46 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 16,
                     ),
                     SizedBox(
-                      height: 44,
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
+                        height: 44,
+                        child: Observer(builder: (_) {
+                          return ElevatedButton(
+                            style: ButtonStyle(
+                              shape: MaterialStateProperty.all(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                              ),
+                              backgroundColor:
+                                  MaterialStateProperty.resolveWith<Color>(
+                                      (states) {
+                                if (states.contains(MaterialState.disabled)) {
+                                  return Colors.purple;
+                                  // return primaryColor.withAlpha(100);
+                                } else {
+                                  return Colors.purple;
+                                  // return primaryColor;
+                                }
+                              }),
+                              textStyle: MaterialStateProperty.all(
+                                TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          ),
-                          backgroundColor:
-                              MaterialStateProperty.resolveWith<Color>(
-                                  (states) {
-                            if (states.contains(MaterialState.disabled)) {
-                              return primaryColor.withAlpha(100);
-                            } else {
-                              return primaryColor;
-                            }
-                          }),
-                          textStyle: MaterialStateProperty.all(
-                            TextStyle(
-                              color: Colors.white,
+                            child: Text(
+                              'Login',
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                        ),
-                        child: Text(
-                          'Login',
-                          textAlign: TextAlign.center,
-                        ),
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) => ListScreen()));
-                        },
-                      ),
-                    )
+                            onPressed: loginStore.isFormValid
+                                ? () {
+                                    Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                ListScreen()));
+                                  }
+                                : null,
+                          );
+                        }))
                   ],
                 ),
               )),

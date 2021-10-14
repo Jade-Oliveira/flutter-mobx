@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 
 class CustomTextField extends StatelessWidget {
+  CustomTextField(
+      {required this.hint,
+      this.prefix,
+      this.suffix,
+      this.obscure = false,
+      this.textInputType,
+      required this.onChanged,
+      this.enabled,
+      this.controller});
 
-  CustomTextField({this.hint, this.prefix, this.suffix, this.obscure = false,
-    this.textInputType, this.onChanged, this.enabled, this.controller
-  });
-
-  final TextEditingController controller;
+  final TextEditingController? controller;
   final String hint;
-  final Widget prefix;
-  final Widget suffix;
+  final Widget? prefix;
+  final Widget? suffix;
   final bool obscure;
-  final TextInputType textInputType;
+  final TextInputType? textInputType;
   final Function(String) onChanged;
-  final bool enabled;
+  final bool? enabled;
 
   @override
   Widget build(BuildContext context) {
