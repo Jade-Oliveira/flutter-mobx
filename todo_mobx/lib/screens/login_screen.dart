@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:todomobx/stores/login_store.dart';
 import 'package:todomobx/widgets/custom_icon_button.dart';
 import 'package:todomobx/widgets/custom_text_field.dart';
@@ -13,13 +14,25 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final LoginStore loginStore = LoginStore();
-  late Color primaryColor;
 
-  // @override
-  // void initState() {
-  //   primaryColor = Theme.of(context).primaryColor;
-  //   super.initState();
-  // }
+  late ReactionDisposer disposer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    //a reaction diferente do autorun não pega o valor inicial, espera uma mudança no valor
+    //a reaction fica rodando sempre, então ela vai ver sempre que tiver uma alteração na loggedIn, por isso usamos disposer para não ficar consumindo recursos de forma desnecessária
+    disposer = reaction(
+      (_) => loginStore.loggedIn,
+      (loggedIn) {
+        if (loggedIn != null) {
+          Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => ListScreen()));
+        }
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,29 +51,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    CustomTextField(
-                      hint: 'E-mail',
-                      prefix: Icon(Icons.account_circle),
-                      textInputType: TextInputType.emailAddress,
-                      onChanged: loginStore.setEmail,
-                      enabled: true,
-                    ),
+                    Observer(builder: (_) {
+                      return CustomTextField(
+                        hint: 'E-mail',
+                        prefix: Icon(Icons.account_circle),
+                        textInputType: TextInputType.emailAddress,
+                        onChanged: loginStore.setEmail,
+                        enabled: !loginStore.loading,
+                      );
+                    }),
                     const SizedBox(
                       height: 16,
                     ),
-                    CustomTextField(
-                      hint: 'Senha',
-                      prefix: Icon(Icons.lock),
-                      obscure: true,
-                      //passando aqui as actions eu já terei os respectivos campos observables alterados
-                      onChanged: loginStore.setPassword,
-                      enabled: true,
-                      suffix: CustomIconButton(
-                        radius: 32,
-                        iconData: Icons.visibility,
-                        onTap: () {},
-                      ),
-                    ),
+                    Observer(builder: (_) {
+                      return CustomTextField(
+                        hint: 'Senha',
+                        prefix: Icon(Icons.lock),
+                        obscure: !loginStore.passwordVisible,
+                        //passando aqui as actions eu já terei os respectivos campos observables alterados
+                        onChanged: loginStore.setPassword,
+                        enabled: !loginStore.loading,
+                        suffix: CustomIconButton(
+                          radius: 32,
+                          iconData: loginStore.passwordVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          onTap: loginStore.togglePasswordVisibility,
+                        ),
+                      );
+                    }),
                     const SizedBox(
                       height: 16,
                     ),
@@ -68,42 +87,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 44,
                         child: Observer(builder: (_) {
                           return ElevatedButton(
-                            style: ButtonStyle(
-                              shape: MaterialStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                ),
+                              style: ElevatedButton.styleFrom(
+                                primary: Theme.of(context).primaryColor,
+                                onSurface: Theme.of(context)
+                                    .primaryColor
+                                    .withAlpha(100),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(32)),
                               ),
-                              backgroundColor:
-                                  MaterialStateProperty.resolveWith<Color>(
-                                      (states) {
-                                if (states.contains(MaterialState.disabled)) {
-                                  return Colors.purple;
-                                  // return primaryColor.withAlpha(100);
-                                } else {
-                                  return Colors.purple;
-                                  // return primaryColor;
-                                }
-                              }),
-                              textStyle: MaterialStateProperty.all(
-                                TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              'Login',
-                              textAlign: TextAlign.center,
-                            ),
-                            onPressed: loginStore.isFormValid
-                                ? () {
-                                    Navigator.of(context).pushReplacement(
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                ListScreen()));
-                                  }
-                                : null,
-                          );
+                              child: loginStore.loading
+                                  ? CircularProgressIndicator(
+                                      valueColor:
+                                          AlwaysStoppedAnimation(Colors.white),
+                                    )
+                                  : Text(
+                                      'Login',
+                                      textAlign: TextAlign.center,
+                                    ),
+                              onPressed: loginStore.loginPressed);
                         }))
                   ],
                 ),
@@ -111,5 +112,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    disposer();
+    super.dispose();
   }
 }
