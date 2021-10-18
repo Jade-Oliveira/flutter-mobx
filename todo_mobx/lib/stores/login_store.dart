@@ -56,5 +56,14 @@ abstract class _LoginStore with Store {
 
     loading = false;
     loggedIn = true;
+
+    //reseta email e senha porque a loginStore não é reconstruída
+    email = '';
+    password = '';
+  }
+
+  @action
+  void logout() {
+    loggedIn = false;
   }
 }

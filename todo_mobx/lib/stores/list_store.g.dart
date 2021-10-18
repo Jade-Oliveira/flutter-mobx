@@ -9,6 +9,14 @@ part of 'list_store.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$ListStore on _ListStoreBase, Store {
+  Computed<bool>? _$isFormValidComputed;
+
+  @override
+  bool get isFormValid =>
+      (_$isFormValidComputed ??= Computed<bool>(() => super.isFormValid,
+              name: '_ListStoreBase.isFormValid'))
+          .value;
+
   final _$newTodoTitleAtom = Atom(name: '_ListStoreBase.newTodoTitle');
 
   @override
@@ -41,7 +49,8 @@ mixin _$ListStore on _ListStoreBase, Store {
   @override
   String toString() {
     return '''
-newTodoTitle: ${newTodoTitle}
+newTodoTitle: ${newTodoTitle},
+isFormValid: ${isFormValid}
     ''';
   }
 }
